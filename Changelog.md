@@ -6,6 +6,10 @@ suggestions, ideas and improvements to FriendlyId.
 * Table of Contents
 {:toc}
 
+## 4.1.0.beta.1 (2013-01-09)
+
+Made the :scoped and :history modules compatible with each other (Andre Duffeck)
+
 ## 4.0.10.1 (2013-08-20)
 
 * Update dependencies in gemspec to avoid using with Active Record 4.
