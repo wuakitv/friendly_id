@@ -118,19 +118,29 @@ an example of one way to set this up:
     end
 
     def serialized_scope
-      friendly_id_config.scope_columns.sort.map { |column| "#{column}:#{send(column)}" }.join(",")
+      friendly_id_config.scope_columns.sort.map do |column|
+        if column.is_a? Hash
+          "#{column.values.first.to_s}:#{send(column.values.first.to_s)}"
+        else
+          "#{column}:#{send(column)}"
+        end
+      end.join(",")
     end
 
     def scope_for_slug_generator
       relation = self.class.unscoped.friendly
       friendly_id_config.scope_columns.each do |column|
-        relation = relation.where(column => send(column))
+        if column.is_a? Hash
+          relation = relation.where(
+            column.keys.first.to_s.pluralize =>
+              { column.values.first.to_s => send(column.values.first) }
+            ).joins(column.keys.first)
+        else
+          relation = relation.where(column => send(column))
+        end
       end
-      if changed.include?(friendly_id_config.slug_column)
-        primary_key_name = self.class.primary_key
-        relation = relation.where.not(primary_key_name => send(primary_key_name))
-      end
-      relation
+      primary_key_name = self.class.primary_key
+      relation.where.not(primary_key_name => send(primary_key_name))
     end
     private :scope_for_slug_generator
 
@@ -160,7 +170,13 @@ an example of one way to set this up:
       #
       # @return String The scope column
       def scope_columns
-        [@scope].flatten.map { |s| (reflection_foreign_key(s) or s).to_s }
+        [@scope].flatten.map do |s|
+          if s.is_a? Hash
+            s
+          else
+            (reflection_foreign_key(s) or s).to_s
+          end
+        end
       end
 
       private
